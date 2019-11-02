@@ -7,7 +7,7 @@ name: default
 ---
 kind: pipeline
 type: docker
-name: sync
+name: sync_push
 
 steps:
   - name: package
@@ -18,20 +18,37 @@ steps:
       - name: m2
         path: /root/.m2
 
-  - name: sync_github
-    image: alpine:edge
+  - name: sync_branch
+    image: alpine/git:1.0.7
     environment:
       GH_TOKEN:
         from_secret: GH_TOKEN
+    when:
+      event:
+        - push
     commands:
-      - apk update
-      - apk add git
       - echo "https://$(echo $GH_TOKEN)@github.com" > /root/.git-credentials
       - git remote add github https://github.com/iaceob/spark-patch.git
       - git config --global credential.helper store
       - git config --global user.email iaceob@gmail.com
       - git config --global user.name iaceob
       - git push github $DRONE_BRANCH
+
+  - name: sync_tag
+    image: alpine/git:1.0.7
+    environment:
+      GH_TOKEN:
+        from_secret: GH_TOKEN
+    when:
+      event:
+        - tag
+    commands:
+      - echo "https://$(echo $GH_TOKEN)@github.com" > /root/.git-credentials
+      - git remote add github https://github.com/iaceob/spark-patch.git
+      - git config --global credential.helper store
+      - git config --global user.email iaceob@gmail.com
+      - git config --global user.name iaceob
+      - git push github $DRONE_TAG
 
 volumes:
   - name: m2
