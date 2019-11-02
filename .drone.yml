@@ -1,0 +1,40 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+
+---
+kind: pipeline
+type: docker
+name: sync
+
+steps:
+  - name: package
+    image: maven:3.6-alpine
+    commands:
+      - mvn clean compile
+    volumes:
+      - name: m2
+        path: /root/.m2
+
+  - name: sync_github
+    image: alpine:edge
+    environment:
+      GH_TOKEN:
+        from_secret: GH_TOKEN
+    commands:
+      - apk update
+      - apk add git
+      - echo "https://$(echo $GH_TOKEN)@github.com" > /root/.git-credentials
+      - git remote add github https://github.com/iaceob/spark-patch.git
+      - git config --global credential.helper store
+      - git config --global user.email iaceob@gmail.com
+      - git config --global user.name iaceob
+      - git push github $DRONE_BRANCH
+
+volumes:
+  - name: m2
+    host:
+      path: /data/mount/m2
+
