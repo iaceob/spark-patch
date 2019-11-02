@@ -48,6 +48,7 @@ steps:
       - git config --global credential.helper store
       - git config --global user.email iaceob@gmail.com
       - git config --global user.name iaceob
+      - git fetch origin
       - git push github $DRONE_TAG
 
 volumes:
